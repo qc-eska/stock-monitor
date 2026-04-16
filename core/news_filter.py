@@ -1,20 +1,9 @@
 import hashlib
-from datetime import datetime, timedelta
 
-# cache na duplikaty
 SEEN_HASHES = set()
 
-# słowa kluczowe (ważne)
 POSITIVE = ["zysk", "rekord", "umowa", "wzrost", "kontrakt"]
 NEGATIVE = ["strata", "spadek", "zadłużenie", "problemy", "cięcia", "zwolnienia"]
-
-# must-have (bez tego odrzucamy)
-REQUIRED = ["jsw", "jastrzębska"]
-
-
-def is_relevant(text):
-    text = text.lower()
-    return any(word in text for word in REQUIRED)
 
 
 def is_duplicate(text):
@@ -69,12 +58,9 @@ def process_news(article):
 
     score = score_news(title)
 
-    # 🔥 ważne: sektor = słabszy sygnał
+    # 🔥 sektor = słabszy wpływ
     if news_type == "sector":
         score = int(score * 0.5)
-
-    if score == 0:
-        return None
 
     mode = classify_score(score)
     message = format_message(title, url, score)
