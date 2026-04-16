@@ -124,4 +124,13 @@ def filter_news(news: list) -> list:
         if score >= 5:
             alerts.append(build_alert(item, score))
 
+    if score >= 8:
+    set_mode("red")
+
+elif score >= 5:
+    set_mode("yellow")
+
+else:
+    set_mode("green")
+            
     return alerts
