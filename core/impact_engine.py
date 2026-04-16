@@ -1,24 +1,29 @@
-from datetime import datetime
-from telegram.channel_branding import set_channel_photo, set_channel_title
-
-STATE = {"mode": "green"}
-
-MODES = {
-    "green": {"title": "JSW Monitor 🟢", "photo": "assets/green.jpg"},
-    "yellow": {"title": "JSW Monitor 🟡 ALERT", "photo": "assets/yellow.jpg"},
-    "red": {"title": "JSW MONITOR 🔴 PANIC", "photo": "assets/red.jpg"}
-}
-
-
-def set_mode(mode):
-    if mode == STATE["mode"]:
-        return
 def filter_news(news):
-    return process_news(news)[0]
+    alerts = []
+    max_score = 0
 
-    config = MODES[mode]
+    for item in news:
+        text = f"{item.get('title','')} {item.get('url','')}"
 
-    set_channel_title(config["title"])
-    set_channel_photo(config["photo"])
+        # tu zakładamy że masz score_news + is_recent itd
+        score = score_news(text)
 
-    STATE["mode"] = mode
+        if score > max_score:
+            max_score = score
+
+        if score >= 5:
+            alerts.append(
+                f"📈 JSW ALERT (score: {score})\n\n"
+                f"{item.get('title')}\n"
+                f"{item.get('url')}"
+            )
+
+    # mode logic
+    if max_score >= 8:
+        set_mode("red")
+    elif max_score >= 5:
+        set_mode("yellow")
+    else:
+        set_mode("green")
+
+    return alerts, "ok"
