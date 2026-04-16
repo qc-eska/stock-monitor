@@ -3,7 +3,6 @@ import re
 
 URLS = [
     "https://www.bankier.pl/rss/wiadomosci.xml",
-    "https://stooq.pl/rss/?f=1"
 ]
 
 
@@ -11,30 +10,36 @@ def clean_text(text):
     return re.sub(r"\s+", " ", text or "").strip()
 
 
-def is_jsw_related(text):
+def classify_text(text):
     text = text.lower()
 
-    keywords = [
-        "jsw",
-        "jastrzębska",
+    # 🎯 HIGH (bezpośrednie JSW)
+    if "jsw" in text or "jastrzębska" in text:
+        return "jsw"
+
+    # 🌍 MEDIUM (sektor)
+    sector_keywords = [
         "węgiel",
+        "górnictwo",
         "koks",
-        "spółki węglowe",
-        "górnictwo"
+        "energetyka",
+        "spółki węglowe"
     ]
 
-    return any(k in text for k in keywords)
+    if any(k in text for k in sector_keywords):
+        return "sector"
+
+    return None
 
 
-def fetch_from_url(url):
-    try:
+def fetch_jsw_news(limit=10):
+    all_news = []
+
+    for url in URLS:
         print("[FETCH]", url)
 
         feed = feedparser.parse(url)
-
         print(f"[DEBUG] total entries: {len(feed.entries)}")
-
-        news = []
 
         for entry in feed.entries:
             title = clean_text(entry.get("title", ""))
@@ -43,33 +48,18 @@ def fetch_from_url(url):
             if not title or not link:
                 continue
 
-            print("[DEBUG] TITLE:", title)
+            tag = classify_text(title)
 
-            if not is_jsw_related(title):
+            if not tag:
                 continue
 
-            print("[MATCH] JSW-related:", title)
+            print(f"[MATCH:{tag.upper()}]", title)
 
-            news.append({
+            all_news.append({
                 "title": title,
-                "url": link
+                "url": link,
+                "type": tag
             })
-
-        return news
-
-    except Exception as e:
-        print("[ERROR] fetch_from_url:", e)
-        return []
-
-
-def fetch_jsw_news(limit=10):
-    all_news = []
-
-    for url in URLS:
-        news = fetch_from_url(url)
-
-        if news:
-            all_news.extend(news)
 
     # deduplikacja
     unique = {}
