@@ -48,10 +48,12 @@ def set_channel_title(title):
 def set_mode(mode):
     print("[MODE]", mode)
 
-    if mode == "bullish":
+    mode = mode.lower()
+
+    if mode in ["bullish", "green", "positive"]:
         set_channel_title("📈 JSW - WZROSTY")
 
-    elif mode == "bearish":
+    elif mode in ["bearish", "red", "negative"]:
         set_channel_title("📉 JSW - SPADKI")
 
     else:
