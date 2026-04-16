@@ -9,12 +9,9 @@ def test_loop():
     while True:
         print("TICK: checking price...")
 
-        data = get_jsw_price()
+        price = get_jsw_price()
 
-        print("PRICE RESULT:", data)
-
-        if data:
-            send_message(f"📊 JSW TEST: {data['price']}")
+        print("FETCH VALUE:", price)
 
         time.sleep(30)
 
