@@ -48,10 +48,12 @@ def run_cycle():
         if not result:
             continue
 
-        print("[SEND]", result["message"])
+        message = result["message"]
 
-        send_to_telegram(result["message"])
-        set_mode(result["mode"])
+print("[SEND]", message)
+
+send_to_telegram(message)
+set_mode(result["mode"])
 
 
 def main():
