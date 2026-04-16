@@ -1,3 +1,5 @@
+from telegram.channel_branding import set_mode
+
 def filter_news(news):
     alerts = []
     max_score = 0
