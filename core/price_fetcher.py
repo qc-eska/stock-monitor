@@ -1,8 +1,6 @@
 import requests
 
-
-URL_LIVE = "https://stooq.pl/q/l/?s=jsw_pl&i=1"
-URL_DAILY = "https://stooq.pl/q/l/?s=jsw_pl"
+URL = "https://stooq.pl/q/l/?s=jsw_pl"
 
 
 CACHE = {
@@ -10,58 +8,44 @@ CACHE = {
 }
 
 
-def parse(row):
-    # B/D check
-    if "B/D" in row:
-        return None
-
-    try:
-        for v in row:
-            try:
-                f = float(v)
-                if 5 < f < 500:
-                    return f
-            except:
-                continue
-    except:
-        return None
-
-    return None
-
-
-def fetch(url):
-    r = requests.get(url, timeout=10)
-
-    if r.status_code != 200:
-        return None
-
-    lines = r.text.strip().split("\n")
+def parse(text):
+    lines = text.strip().split("\n")
 
     if len(lines) < 2:
         return None
 
     row = lines[1].split(",")
 
-    return parse(row)
+    # ostatnia kolumna = Close (najpewniejsze)
+    try:
+        price = float(row[4])
+        return price
+    except:
+        return None
 
 
 def get_jsw_price():
-    price = fetch(URL_LIVE)
+    try:
+        r = requests.get(URL, timeout=10)
 
-    if price:
-        CACHE["price"] = price
-        return {"price": price}
+        print("STATUS:", r.status_code)
+        print("RAW:", r.text)
 
-    # fallback (close price)
-    price = fetch(URL_DAILY)
+        if r.status_code != 200:
+            return None
 
-    if price:
-        CACHE["price"] = price
-        return {"price": price}
+        price = parse(r.text)
 
-    # last known fallback
-    if CACHE["price"]:
-        print("USING CACHE")
-        return {"price": CACHE["price"]}
+        if price:
+            CACHE["price"] = price
+            return {"price": price}
 
-    return None
+        if CACHE["price"]:
+            print("USING CACHE")
+            return {"price": CACHE["price"]}
+
+        return None
+
+    except Exception as e:
+        print("ERROR:", e)
+        return None
