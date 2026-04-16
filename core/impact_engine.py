@@ -13,6 +13,8 @@ MODES = {
 def set_mode(mode):
     if mode == STATE["mode"]:
         return
+def filter_news(news):
+    return process_news(news)[0]
 
     config = MODES[mode]
 
