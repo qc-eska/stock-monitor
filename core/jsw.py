@@ -1,16 +1,15 @@
 def fetch_jsw_news():
-    # TODO: później RSS / Bankier / Stooq / Investing
     return [
-        {"title": "JSW test news", "url": "https://example.com"}
+        {
+            "title": "JSW STRAJK W KOPALNI - ZATRZYMANA PRODUKCJA",
+            "url": "https://example.com/1"
+        },
+        {
+            "title": "JSW OSTRZEŻENIE WYNIKOWE - DUŻA STRATA EBITDA",
+            "url": "https://example.com/2"
+        },
+        {
+            "title": "JSW podpisuje nowy kontrakt na sprzedaż węgla",
+            "url": "https://example.com/3"
+        }
     ]
-
-
-def analyze(news):
-    alerts = []
-
-    for item in news:
-        alerts.append(
-            f"📈 JSW ALERT\n{item['title']}\n{item['url']}"
-        )
-
-    return alerts
