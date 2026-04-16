@@ -1,62 +1,39 @@
 import requests
 
 
-STOOQ_URL = "https://stooq.pl/q/l/?s=jsw&i=1"
-STOOQ_BACKUP = "https://stooq.pl/q/l/?s=jsw"
+URL = "https://stooq.pl/q/l/?s=jsw_pl&i=1"
 
 
-def parse_stooq(csv_text):
+def get_jsw_price():
     try:
-        lines = csv_text.strip().split("\n")
+        r = requests.get(URL, timeout=10)
+
+        if r.status_code != 200:
+            print("HTTP ERROR:", r.status_code)
+            return None
+
+        text = r.text.strip()
+
+        print("RAW:", text)  # debug — zobaczymy co zwraca
+
+        lines = text.split("\n")
 
         if len(lines) < 2:
+            print("CSV FORMAT ERROR")
             return None
 
         row = lines[1].split(",")
 
-        # Close price
-        price = row[4]
-
-        if not price or price == "0":
+        if len(row) < 5:
+            print("CSV COLUMN ERROR")
             return None
 
-        return float(price)
+        price = float(row[4])
+
+        return {
+            "price": price
+        }
 
     except Exception as e:
-        print("PARSE ERROR:", e)
+        print("FETCH ERROR:", e)
         return None
-
-
-def fetch_from_stooq(url):
-    try:
-        r = requests.get(url, timeout=10)
-
-        if r.status_code != 200:
-            print("STOOQ HTTP ERROR:", r.status_code)
-            return None
-
-        return parse_stooq(r.text)
-
-    except Exception as e:
-        print("STOOQ FETCH ERROR:", e)
-        return None
-
-
-def get_jsw_price():
-    # PRIMARY SOURCE
-    price = fetch_from_stooq(STOOQ_URL)
-
-    if price:
-        return {"price": price}
-
-    print("Primary source failed, trying backup...")
-
-    # BACKUP SOURCE
-    price = fetch_from_stooq(STOOQ_BACKUP)
-
-    if price:
-        return {"price": price}
-
-    print("Backup source also failed")
-
-    return None
