@@ -1,41 +1,38 @@
 import requests
-import re
 
-CACHE = {
-    "price": None
-}
-
-
-URL = "https://finance.yahoo.com/quote/JSW.WA"
-
-
-def get_price_from_html(html):
-    match = re.search(r'"regularMarketPrice":\{"raw":([0-9.]+)', html)
-    if match:
-        return float(match.group(1))
-    return None
+URL = "https://stooq.pl/q/l/?s=jsw_pl"
 
 
 def get_jsw_price():
     try:
-        r = requests.get(URL, headers={"User-Agent": "Mozilla/5.0"}, timeout=10)
+        r = requests.get(URL, timeout=10)
 
-        print("STATUS:", r.status_code)
+        print("RAW:", r.text)
 
-        if r.status_code != 200:
+        lines = r.text.strip().split("\n")
+
+        if len(lines) < 2:
             return None
 
-        price = get_price_from_html(r.text)
+        row = lines[1].split(",")
 
-        if price:
-            CACHE["price"] = price
-            return {"price": price}
+        # CSV format:
+        # 0 symbol
+        # 1 date
+        # 2 time
+        # 3 open
+        # 4 high
+        # 5 low
+        # 6 close  ← TO JEST NAJPEWNIEJSZE
 
-        if CACHE["price"]:
-            print("USING CACHE")
-            return {"price": CACHE["price"]}
+        close = row[6]
 
-        return None
+        price = float(close)
+
+        return {
+            "price": price,
+            "currency": "PLN"
+        }
 
     except Exception as e:
         print("ERROR:", e)
