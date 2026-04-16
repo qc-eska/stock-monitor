@@ -1,8 +1,14 @@
 import feedparser
+import requests
+from bs4 import BeautifulSoup
 import re
 
-URLS = [
+URLS_RSS = [
     "https://www.bankier.pl/rss/wiadomosci.xml",
+]
+
+URLS_HTML = [
+    "https://www.bankier.pl/wiadomosci",
 ]
 
 
@@ -13,17 +19,11 @@ def clean_text(text):
 def classify_text(text):
     text = text.lower()
 
-    # 🎯 JSW bezpośrednie
     if "jsw" in text or "jastrzębsk" in text:
         return "jsw"
 
-    # 🌍 sektor (rdzenie słów!)
     sector_keywords = [
-        "węgl",     # węgiel, węgla, węglowe
-        "górn",     # górnictwo, górniczy
-        "koks",
-        "energet",
-        "kopaln"
+        "węgl", "górn", "koks", "energet", "kopaln"
     ]
 
     if any(k in text for k in sector_keywords):
@@ -32,44 +32,105 @@ def classify_text(text):
     return None
 
 
-def fetch_jsw_news(limit=10):
-    all_news = []
+# ======================
+# RSS
+# ======================
+def fetch_from_rss(url):
+    print("[RSS]", url)
 
-    for url in URLS:
-        print("[FETCH]", url)
+    feed = feedparser.parse(url)
+    news = []
 
-        feed = feedparser.parse(url)
-        print(f"[DEBUG] total entries: {len(feed.entries)}")
+    for entry in feed.entries:
+        title = clean_text(entry.get("title", ""))
+        link = entry.get("link", "")
 
-        for entry in feed.entries:
-            title = clean_text(entry.get("title", ""))
-            link = entry.get("link", "")
+        if not title or not link:
+            continue
+
+        tag = classify_text(title)
+        if not tag:
+            continue
+
+        print(f"[MATCH RSS:{tag}]", title)
+
+        news.append({
+            "title": title,
+            "url": link,
+            "type": tag
+        })
+
+    return news
+
+
+# ======================
+# HTML fallback
+# ======================
+def fetch_from_html(url):
+    print("[HTML]", url)
+
+    news = []
+
+    try:
+        r = requests.get(url, headers={"User-Agent": "Mozilla/5.0"}, timeout=10)
+
+        soup = BeautifulSoup(r.text, "html.parser")
+
+        articles = soup.find_all("a")
+
+        for a in articles:
+            title = clean_text(a.text)
+            link = a.get("href")
 
             if not title or not link:
                 continue
 
-            print("[DEBUG] TITLE:", title)
+            if len(title) < 20:
+                continue
 
             tag = classify_text(title)
-
             if not tag:
                 continue
 
-            print(f"[MATCH:{tag.upper()}]", title)
+            if not link.startswith("http"):
+                link = "https://www.bankier.pl" + link
 
-            all_news.append({
+            print(f"[MATCH HTML:{tag}]", title)
+
+            news.append({
                 "title": title,
                 "url": link,
                 "type": tag
             })
 
-    # deduplikacja
+    except Exception as e:
+        print("[ERROR HTML]", e)
+
+    return news
+
+
+# ======================
+# MAIN
+# ======================
+def fetch_jsw_news(limit=10):
+    all_news = []
+
+    # RSS
+    for url in URLS_RSS:
+        all_news.extend(fetch_from_rss(url))
+
+    # HTML fallback (jeśli mało danych)
+    if len(all_news) < 3:
+        for url in URLS_HTML:
+            all_news.extend(fetch_from_html(url))
+
+    # dedupe
     unique = {}
     for n in all_news:
         unique[n["title"]] = n
 
     final_news = list(unique.values())[:limit]
 
-    print(f"[FETCHED TOTAL] {len(final_news)}")
+    print(f"[TOTAL NEWS] {len(final_news)}")
 
     return final_news
