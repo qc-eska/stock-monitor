@@ -13,6 +13,19 @@ NEGATIVE = [
     "ograniczenie", "zamknięcie"
 ]
 
+# 🔥 NOWE: sektorowe interpretacje
+SECTOR_POSITIVE = [
+    "wsparcie", "dotacje", "rozwój", "inwestycje"
+]
+
+SECTOR_NEGATIVE = [
+    "koniec węgla",
+    "ograniczenie wydobycia",
+    "zamknięcie kopalń",
+    "transformacja energetyczna",
+    "dekarbonizacja"
+]
+
 
 def is_duplicate(text):
     h = hashlib.md5(text.encode()).hexdigest()
@@ -22,10 +35,11 @@ def is_duplicate(text):
     return False
 
 
-def score_news(text):
+def score_news(text, news_type):
     text = text.lower()
     score = 0
 
+    # standardowe
     for word in POSITIVE:
         if word in text:
             score += 1
@@ -33,6 +47,16 @@ def score_news(text):
     for word in NEGATIVE:
         if word in text:
             score -= 1
+
+    # 🔥 sektorowe (ważne!)
+    if news_type == "sector":
+        for word in SECTOR_POSITIVE:
+            if word in text:
+                score += 1
+
+        for word in SECTOR_NEGATIVE:
+            if word in text:
+                score -= 1
 
     return score
 
@@ -64,11 +88,7 @@ def process_news(article):
     if is_duplicate(title):
         return None
 
-    score = score_news(title)
-
-    # 🔥 sektor = słabszy wpływ
-    if news_type == "sector":
-        score = int(score * 0.5)
+    score = score_news(title, news_type)
 
     mode = classify_score(score)
     message = format_message(title, url, score)
