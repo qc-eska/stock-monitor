@@ -35,7 +35,6 @@ def run_cycle():
     articles = fetch_jsw_news()
 
     print("[DEBUG] RAW ARTICLES:", articles)
-
     print(f"[FOUND] {len(articles)} articles")
 
     for article in articles:
@@ -50,10 +49,10 @@ def run_cycle():
 
         message = result["message"]
 
-print("[SEND]", message)
+        print("[SEND]", message)
 
-send_to_telegram(message)
-set_mode(result["mode"])
+        send_to_telegram(message)
+        set_mode(result["mode"])
 
 
 def main():
@@ -65,8 +64,7 @@ def main():
         except Exception as e:
             print("[ERROR MAIN LOOP]", e)
 
-        # ⏱️ co ile sprawdza newsy (sekundy)
-        time.sleep(300)  # 5 minut
+        time.sleep(300)
 
 
 if __name__ == "__main__":
