@@ -2,8 +2,16 @@ import hashlib
 
 SEEN_HASHES = set()
 
-POSITIVE = ["zysk", "rekord", "umowa", "wzrost", "kontrakt"]
-NEGATIVE = ["strata", "spadek", "zadłużenie", "problemy", "cięcia", "zwolnienia"]
+POSITIVE = [
+    "zysk", "rekord", "umowa", "wzrost", "kontrakt",
+    "inwestycja", "finansowanie", "wsparcie", "dotacja"
+]
+
+NEGATIVE = [
+    "strata", "spadek", "zadłużenie", "problemy",
+    "cięcia", "zwolnienia", "kryzys", "upadłość",
+    "ograniczenie", "zamknięcie"
+]
 
 
 def is_duplicate(text):
