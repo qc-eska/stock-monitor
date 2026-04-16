@@ -3,32 +3,52 @@ import time
 
 CACHE = {
     "price": None,
-    "timestamp": 0
+    "ts": 0
 }
 
-URL = "https://query1.finance.yahoo.com/v8/finance/chart/JSW.WA"
+# Stooq (najstabilniejsze, mimo opóźnień)
+URL = "https://stooq.pl/q/l/?s=jsw_pl&i=1"
 
 
-def fetch_live():
+def fetch_price():
     r = requests.get(URL, timeout=10)
-    data = r.json()
 
-    return data["chart"]["result"][0]["meta"]["regularMarketPrice"]
+    if r.status_code != 200:
+        print("HTTP ERROR:", r.status_code)
+        return None
+
+    lines = r.text.strip().split("\n")
+
+    if len(lines) < 2:
+        return None
+
+    row = lines[1].split(",")
+
+    try:
+        # Close price
+        price = float(row[4])
+        return price
+    except:
+        return None
 
 
 def get_jsw_price():
     now = time.time()
 
-    # 🧠 cache 10 minut
-    if CACHE["price"] and now - CACHE["timestamp"] < 600:
+    # 🧠 cache 5 min
+    if CACHE["price"] and now - CACHE["ts"] < 300:
         return {"price": CACHE["price"]}
 
-    try:
-        price = fetch_live()
+    price = fetch_price()
 
-        CACHE["price"] = float(price)
-        CACHE["timestamp"] = now
+    if price:
+        CACHE["price"] = price
+        CACHE["ts"] = now
+        return {"price": price}
 
+    # fallback: jeśli wszystko padło → ostatnia znana cena
+    if CACHE["price"]:
+        print("USING STALE CACHE")
         return {"price": CACHE["price"]}
 
-    except
+    return None
