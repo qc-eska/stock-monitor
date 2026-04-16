@@ -1,20 +1,41 @@
-import time
 from core.price_fetcher import get_jsw_price
+from core.price_state import STATE
 from telegram.bot import send_message
+
+
+THRESHOLD = 1.0  # 1%
 
 
 def send_hourly_jsw_update():
     data = get_jsw_price()
 
     if not data:
-        send_message("📊 JSW: brak danych rynkowych")
         return
 
-    text = (
-        f"📊 JSW UPDATE (1H)\n\n"
-        f"Cena: {data['price']}\n"
-        f"Zmiana: {data['change']} ({data['change_pct']}%)\n"
-        f"Czas: {data['time']}"
-    )
+    price = data["price"]
 
-    send_message(text)
+    last_price = STATE["last_price"]
+
+    # pierwsze uruchomienie
+    if last_price is None:
+        STATE["last_price"] = price
+        return
+
+    change_pct = ((price - last_price) / last_price) * 100
+
+    # aktualizacja stanu zawsze
+    STATE["last_price"] = price
+
+    # alert tylko przy ruchu >= 1%
+    if abs(change_pct) >= THRESHOLD:
+
+        direction = "📈" if change_pct > 0 else "📉"
+
+        text = (
+            f"{direction} JSW MOVE ALERT (±1%)\n\n"
+            f"Cena: {price}\n"
+            f"Zmiana: {change_pct:.2f}%\n"
+            f"Czas: {data['time']}"
+        )
+
+        send_message(text)
