@@ -1,48 +1,25 @@
-from scrapers.olx import fetch_olx
-from scrapers.otomoto import fetch_otomoto
-from scrapers.autoplac import fetch_autoplac
-from scrapers.sprzedajemy import fetch_sprzedajemy
-from core.analyzer import analyze_listings
-from telegram.bot import send_alert
 import time
-
-CHAT_ID = "-1003889107367"
-
-FIRST_RUN = True
-
+from core.jsw import fetch_jsw_news, analyze
+from telegram.bot import send_message
 
 def run():
-    global FIRST_RUN
 
-    send_alert("🚗 Stock monitor START")
+    send_message("📡 JSW monitor START")
 
     while True:
         try:
-            listings = []
+            news = fetch_jsw_news()
+            alerts = analyze(news)
 
-            listings += fetch_olx()
-            listings += fetch_otomoto()
-            listings += fetch_autoplac()
-            listings += fetch_sprzedajemy()
+            for a in alerts:
+                send_message(a)
 
-            print("TOTAL:", len(listings))
-
-            if FIRST_RUN:
-                print("Bootstrap - no alerts")
-                FIRST_RUN = False
-            else:
-                alerts = analyze_listings(listings)
-
-                for alert in alerts:
-                    send_alert(alert, CHAT_ID)
-
-            print("Scan done")
+            print("scan ok:", len(news))
 
         except Exception as e:
-            print("ERROR:", e)
-            send_alert(f"ERROR: {e}", CHAT_ID)
+            send_message(f"ERROR JSW: {e}")
 
-        time.sleep(1800)
+        time.sleep(600)  # co 10 min
 
 
 if __name__ == "__main__":
