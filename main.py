@@ -2,7 +2,7 @@ import time
 import threading
 
 from core.jsw import fetch_jsw_news
-from core.impact_engine import filter_news
+from core.impact_engine import process_news
 from telegram.bot import send_message
 
 
@@ -12,6 +12,7 @@ def news_loop():
 
         news = fetch_jsw_news()
         alerts = filter_news(news)
+        alerts, mode = process_news(news)
 
         for a in alerts:
             send_message(a)
