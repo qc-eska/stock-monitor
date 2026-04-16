@@ -13,17 +13,17 @@ def clean_text(text):
 def classify_text(text):
     text = text.lower()
 
-    # 🎯 HIGH (bezpośrednie JSW)
-    if "jsw" in text or "jastrzębska" in text:
+    # 🎯 JSW bezpośrednie
+    if "jsw" in text or "jastrzębsk" in text:
         return "jsw"
 
-    # 🌍 MEDIUM (sektor)
+    # 🌍 sektor (rdzenie słów!)
     sector_keywords = [
-        "węgiel",
-        "górnictwo",
+        "węgl",     # węgiel, węgla, węglowe
+        "górn",     # górnictwo, górniczy
         "koks",
-        "energetyka",
-        "spółki węglowe"
+        "energet",
+        "kopaln"
     ]
 
     if any(k in text for k in sector_keywords):
@@ -47,6 +47,8 @@ def fetch_jsw_news(limit=10):
 
             if not title or not link:
                 continue
+
+            print("[DEBUG] TITLE:", title)
 
             tag = classify_text(title)
 
