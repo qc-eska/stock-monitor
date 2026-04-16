@@ -12,6 +12,7 @@ def test_loop():
         price = get_jsw_price()
 
         print("FETCH VALUE:", price)
+        print("RAW ENGINE OUTPUT:", price)
 
         time.sleep(30)
 
