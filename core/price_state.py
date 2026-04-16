@@ -1,3 +1,4 @@
 STATE = {
-    "last_price": None
+    "last_report_price": None,
+    "reference_price": None
 }
