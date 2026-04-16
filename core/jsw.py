@@ -1,12 +1,8 @@
-import requests
-import xml.etree.ElementTree as ET
+import feedparser
 import re
 
 URLS = [
-    # Bankier (bardzo dobre źródło)
     "https://www.bankier.pl/rss/wiadomosci.xml",
-
-    # Stooq (rynkowe newsy)
     "https://stooq.pl/rss/?f=1"
 ]
 
@@ -28,35 +24,23 @@ def fetch_from_url(url):
     try:
         print("[FETCH]", url)
 
-        r = requests.get(
-            url,
-            headers={"User-Agent": "Mozilla/5.0"},
-            timeout=10
-        )
-
-        if r.status_code != 200:
-            print("[ERROR] fetch failed:", r.status_code)
-            return []
-
-        root = ET.fromstring(r.content)
+        feed = feedparser.parse(url)
 
         news = []
 
-        for item in root.findall(".//item"):
-            title = item.find("title")
-            link = item.find("link")
+        for entry in feed.entries:
+            title = clean_text(entry.get("title", ""))
+            link = entry.get("link", "")
 
             if not title or not link:
                 continue
 
-            title_text = clean_text(title.text)
-
-            if not is_jsw_related(title_text):
+            if not is_jsw_related(title):
                 continue
 
             news.append({
-                "title": title_text,
-                "url": link.text
+                "title": title,
+                "url": link
             })
 
         return news
@@ -75,7 +59,7 @@ def fetch_jsw_news(limit=10):
         if news:
             all_news.extend(news)
 
-    # deduplikacja
+    # deduplikacja po title
     unique = {}
     for n in all_news:
         unique[n["title"]] = n
