@@ -14,9 +14,6 @@ from scrapers.sprzedajemy import fetch_sprzedajemy
 FIRST_RUN = True
 
 
-# ----------------------------
-# 🕐 HOURLY LOOP
-# ----------------------------
 def hourly_loop():
     while True:
         try:
@@ -27,13 +24,10 @@ def hourly_loop():
         time.sleep(3600)
 
 
-# ----------------------------
-# MAIN LOOP
-# ----------------------------
 def run():
     global FIRST_RUN
 
-    send_message("🚀 JSW monitor uruchomiony (LIVE MODE)")
+    send_message("🚀 JSW monitor LIVE (±1% alerts)")
 
     while True:
         try:
@@ -47,7 +41,6 @@ def run():
             print("TOTAL:", len(listings))
 
             if FIRST_RUN:
-                print("Bootstrap run - no alerts")
                 FIRST_RUN = False
             else:
                 alerts = analyze_listings(listings)
@@ -64,9 +57,6 @@ def run():
         time.sleep(1800)
 
 
-# ----------------------------
-# START
-# ----------------------------
 if __name__ == "__main__":
     threading.Thread(target=hourly_loop, daemon=True).start()
     run()
