@@ -1,38 +1,34 @@
 import requests
-import json
+import time
 
+CACHE = {
+    "price": None,
+    "timestamp": 0
+}
 
 URL = "https://query1.finance.yahoo.com/v8/finance/chart/JSW.WA"
 
 
+def fetch_live():
+    r = requests.get(URL, timeout=10)
+    data = r.json()
+
+    return data["chart"]["result"][0]["meta"]["regularMarketPrice"]
+
+
 def get_jsw_price():
+    now = time.time()
+
+    # 🧠 cache 10 minut
+    if CACHE["price"] and now - CACHE["timestamp"] < 600:
+        return {"price": CACHE["price"]}
+
     try:
-        r = requests.get(URL, timeout=10)
+        price = fetch_live()
 
-        if r.status_code != 200:
-            print("HTTP ERROR:", r.status_code)
-            return None
+        CACHE["price"] = float(price)
+        CACHE["timestamp"] = now
 
-        data = r.json()
+        return {"price": CACHE["price"]}
 
-        result = data.get("chart", {}).get("result")
-
-        if not result:
-            print("NO RESULT")
-            return None
-
-        meta = result[0].get("meta", {})
-
-        price = meta.get("regularMarketPrice")
-
-        if price is None:
-            print("NO PRICE FIELD")
-            return None
-
-        return {
-            "price": float(price)
-        }
-
-    except Exception as e:
-        print("FETCH ERROR:", e)
-        return None
+    except
