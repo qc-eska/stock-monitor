@@ -1,25 +1,32 @@
+# main.py
+
 import time
-from core.jsw import fetch_jsw_news, analyze
+from core.jsw import fetch_jsw_news
+from core.impact_engine import filter_news
 from telegram.bot import send_message
 
 def run():
 
-    send_message("📡 JSW monitor START")
+    send_message("📡 JSW IMPACT MONITOR START")
 
     while True:
         try:
             news = fetch_jsw_news()
-            alerts = analyze(news)
 
-            for a in alerts:
-                send_message(a)
+            alerts = filter_news(news)
+
+            if alerts:
+                for a in alerts:
+                    send_message(a)
+            else:
+                print("no high impact news")
 
             print("scan ok:", len(news))
 
         except Exception as e:
             send_message(f"ERROR JSW: {e}")
 
-        time.sleep(600)  # co 10 min
+        time.sleep(600)
 
 
 if __name__ == "__main__":
