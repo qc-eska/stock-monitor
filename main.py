@@ -34,8 +34,16 @@ def run_cycle():
 
     articles = fetch_jsw_news()
 
+    print("[DEBUG] RAW ARTICLES:", articles)
+
+    print(f"[FOUND] {len(articles)} articles")
+
     for article in articles:
+        print("[DEBUG] ARTICLE:", article)
+
         result = process_news(article)
+
+        print("[DEBUG] RESULT:", result)
 
         if not result:
             continue
