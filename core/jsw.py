@@ -3,11 +3,11 @@ import xml.etree.ElementTree as ET
 import re
 
 URLS = [
-    # główny
-    "https://news.google.com/rss/search?q=JSW&hl=pl&gl=PL&ceid=PL:pl",
+    # Bankier (bardzo dobre źródło)
+    "https://www.bankier.pl/rss/wiadomosci.xml",
 
-    # fallback (więcej wyników)
-    "https://news.google.com/rss/search?q=Jastrzębska+Spółka+Węglowa&hl=pl&gl=PL&ceid=PL:pl"
+    # Stooq (rynkowe newsy)
+    "https://stooq.pl/rss/?f=1"
 ]
 
 
@@ -17,11 +17,17 @@ def clean_text(text):
 
 def is_jsw_related(text):
     text = text.lower()
-    return "jsw" in text or "jastrzębska" in text
+    return (
+        "jsw" in text
+        or "jastrzębska" in text
+        or "spółka węglowa" in text
+    )
 
 
 def fetch_from_url(url):
     try:
+        print("[FETCH]", url)
+
         r = requests.get(
             url,
             headers={"User-Agent": "Mozilla/5.0"},
@@ -64,19 +70,18 @@ def fetch_jsw_news(limit=10):
     all_news = []
 
     for url in URLS:
-        print("[FETCH]", url)
-
         news = fetch_from_url(url)
 
         if news:
             all_news.extend(news)
 
-        if len(all_news) >= limit:
-            break
-
-    # usuń duplikaty po title
+    # deduplikacja
     unique = {}
     for n in all_news:
         unique[n["title"]] = n
 
-    return list(unique.values())[:limit]
+    final_news = list(unique.values())[:limit]
+
+    print(f"[FETCHED TOTAL] {len(final_news)}")
+
+    return final_news
