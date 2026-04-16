@@ -1,5 +1,5 @@
 from datetime import datetime
-import calendar
+from core.branding_engine import set_mode
 
 HIGH_IMPACT = {
     "wynik": 5,
@@ -43,38 +43,6 @@ def normalize(text: str) -> str:
     return (text or "").lower()
 
 
-# ----------------------------
-# 📅 FILTER: ONLY CURRENT MONTH
-# ----------------------------
-def is_current_month():
-    now = datetime.utcnow()
-    return now.month, now.year
-
-
-def is_recent(item: dict) -> bool:
-    """
-    Google News RSS nie zawsze daje daty w prostym formacie,
-    więc robimy soft-filter:
-    - jeśli brak daty → przepuszczamy
-    - jeśli data istnieje → sprawdzamy miesiąc
-    """
-
-    pub_date = item.get("published") or item.get("date")
-
-    if not pub_date:
-        return True  # brak daty = nie blokujemy
-
-    try:
-        dt = datetime.fromisoformat(pub_date.replace("Z", ""))
-
-        current_month, current_year = is_current_month()
-
-        return dt.month == current_month and dt.year == current_year
-
-    except Exception:
-        return True
-
-
 def score_news(text: str) -> int:
     text = normalize(text)
     score = 0
@@ -107,30 +75,32 @@ def build_alert(item: dict, score: int) -> str:
 def filter_news(news: list) -> list:
     alerts = []
 
+    max_score = 0  # 🔥 do branding engine
+
     for item in news:
         text = f"{item.get('title','')} {item.get('url','')}"
 
-        # 1. filtr miesiąca
-        if not is_recent(item):
-            continue
-
-        # 2. blokady
         if not is_relevant(text):
             continue
 
-        # 3. scoring
         score = score_news(text)
+
+        if score > max_score:
+            max_score = score
 
         if score >= 5:
             alerts.append(build_alert(item, score))
 
-    if score >= 8:
-    set_mode("red")
+    # ----------------------------
+    # 🎛️ BRANDING ENGINE (TU JEST POPRAWNIE)
+    # ----------------------------
+    if max_score >= 8:
+        set_mode("red")
 
-elif score >= 5:
-    set_mode("yellow")
+    elif max_score >= 5:
+        set_mode("yellow")
 
-else:
-    set_mode("green")
-            
+    else:
+        set_mode("green")
+
     return alerts
