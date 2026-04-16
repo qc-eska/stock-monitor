@@ -5,7 +5,14 @@ TOKEN = os.getenv("TELEGRAM_TOKEN")
 BASE_URL = f"https://api.telegram.org/bot{TOKEN}"
 CHAT_ID = os.getenv("CHAT_ID")
 
-CURRENT_MODE = None  # 🔥 pamięta ostatni stan
+CURRENT_MODE = None
+
+# 🔥 priorytet trybów
+PRIORITY = {
+    "bullish": 1,
+    "neutral": 0,
+    "bearish": 2
+}
 
 
 def set_channel_title(title):
@@ -33,17 +40,26 @@ def set_mode(mode):
 
     mode = mode.lower()
 
-    # 🔥 NIE zmieniaj jeśli to samo
-    if mode == CURRENT_MODE:
+    # 🔥 jeśli pierwszy raz
+    if CURRENT_MODE is None:
+        CURRENT_MODE = mode
+
+    # 🔥 jeśli nowy jest słabszy → ignoruj
+    elif PRIORITY.get(mode, 0) < PRIORITY.get(CURRENT_MODE, 0):
+        print("[SKIP] weaker signal")
+        return
+
+    # 🔥 jeśli taki sam → ignoruj
+    elif mode == CURRENT_MODE:
         print("[SKIP] mode unchanged")
         return
 
     CURRENT_MODE = mode
 
-    if mode in ["bullish", "green", "positive"]:
+    if mode == "bullish":
         set_channel_title("📈 JSW - WZROSTY")
 
-    elif mode in ["bearish", "red", "negative"]:
+    elif mode == "bearish":
         set_channel_title("📉 JSW - SPADKI")
 
     else:
