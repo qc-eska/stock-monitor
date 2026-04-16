@@ -11,15 +11,18 @@ def set_channel_photo(image_path):
 
     url = f"{BASE_URL}/setChatPhoto"
 
-    with open(image_path, "rb") as photo:
-        r = requests.post(
-            url,
-            data={"chat_id": CHAT_ID},
-            files={"photo": photo}
-        )
-
-    print("[BRANDING PHOTO]", r.json())
-    return r.json()
+    try:
+        with open(image_path, "rb") as photo:
+            r = requests.post(
+                url,
+                data={"chat_id": CHAT_ID},
+                files={"photo": photo}
+            )
+        print("[BRANDING PHOTO]", r.json())
+        return r.json()
+    except Exception as e:
+        print("[ERROR PHOTO]", e)
+        return None
 
 
 def set_channel_title(title):
@@ -27,13 +30,29 @@ def set_channel_title(title):
 
     url = f"{BASE_URL}/setChatTitle"
 
-    r = requests.post(
-        url,
-        data={
-            "chat_id": CHAT_ID,
-            "title": title
-        }
-    )
+    try:
+        r = requests.post(
+            url,
+            data={
+                "chat_id": CHAT_ID,
+                "title": title
+            }
+        )
+        print("[BRANDING TITLE]", r.json())
+        return r.json()
+    except Exception as e:
+        print("[ERROR TITLE]", e)
+        return None
 
-    print("[BRANDING TITLE]", r.json())
-    return r.json()
+
+def set_mode(mode):
+    print("[MODE]", mode)
+
+    if mode == "bullish":
+        set_channel_title("📈 JSW - WZROSTY")
+
+    elif mode == "bearish":
+        set_channel_title("📉 JSW - SPADKI")
+
+    else:
+        set_channel_title("⚖️ JSW - NEUTRAL")
