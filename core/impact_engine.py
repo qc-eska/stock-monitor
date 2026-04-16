@@ -1,6 +1,12 @@
 from datetime import datetime
+import email.utils
+
 from core.branding_engine import set_mode
 
+
+# ----------------------------
+# 🎯 IMPACT KEYWORDS
+# ----------------------------
 HIGH_IMPACT = {
     "wynik": 5,
     "zysk": 5,
@@ -39,6 +45,9 @@ BLOCKLIST = [
 ]
 
 
+# ----------------------------
+# 🔧 UTILS
+# ----------------------------
 def normalize(text: str) -> str:
     return (text or "").lower()
 
@@ -64,6 +73,36 @@ def is_relevant(text: str) -> bool:
     return True
 
 
+# ----------------------------
+# 📅 HARD DATE FILTER (FIXED)
+# ----------------------------
+def is_recent(item: dict) -> bool:
+    """
+    Only last 30 days.
+    No fallback = no old news leak.
+    """
+
+    pub_date = item.get("published") or item.get("date")
+
+    if not pub_date:
+        return False
+
+    try:
+        parsed_time = email.utils.parsedate_to_datetime(pub_date)
+
+        now = datetime.utcnow()
+
+        delta_days = (now - parsed_time.replace(tzinfo=None)).days
+
+        return 0 <= delta_days <= 30
+
+    except Exception:
+        return False
+
+
+# ----------------------------
+# 📢 ALERT FORMAT
+# ----------------------------
 def build_alert(item: dict, score: int) -> str:
     return (
         f"📈 JSW IMPACT ALERT (score: {score})\n\n"
@@ -72,27 +111,36 @@ def build_alert(item: dict, score: int) -> str:
     )
 
 
+# ----------------------------
+# 🚀 MAIN ENGINE
+# ----------------------------
 def filter_news(news: list) -> list:
     alerts = []
-
-    max_score = 0  # 🔥 do branding engine
+    max_score = 0
 
     for item in news:
         text = f"{item.get('title','')} {item.get('url','')}"
 
+        # 1. DATE FILTER (CRITICAL FIX)
+        if not is_recent(item):
+            continue
+
+        # 2. BLOCKLIST
         if not is_relevant(text):
             continue
 
+        # 3. SCORING
         score = score_news(text)
 
         if score > max_score:
             max_score = score
 
+        # 4. ALERT THRESHOLD
         if score >= 5:
             alerts.append(build_alert(item, score))
 
     # ----------------------------
-    # 🎛️ BRANDING ENGINE (TU JEST POPRAWNIE)
+    # 🎛️ BRANDING (GLOBAL STATE)
     # ----------------------------
     if max_score >= 8:
         set_mode("red")
