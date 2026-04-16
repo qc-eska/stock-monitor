@@ -4,17 +4,19 @@ import requests
 def get_jsw_price():
     url = "https://stooq.pl/q/l/?s=jsw&f=sd2t2ohlcv&h&e=json"
 
-    r = requests.get(url)
-    data = r.json()
+    try:
+        r = requests.get(url, timeout=10)
+        data = r.json()
 
-    if not data or "close" not in data["data"][0]:
+        item = data["data"][0]
+
+        return {
+            "price": float(item.get("close")),
+            "change": item.get("change"),
+            "change_pct": item.get("changes"),
+            "time": item.get("time"),
+        }
+
+    except Exception as e:
+        print("Price fetch error:", e)
         return None
-
-    item = data["data"][0]
-
-    return {
-        "price": item["close"],
-        "change": item["change"],
-        "change_pct": item["changes"],
-        "time": item["time"]
-    }
