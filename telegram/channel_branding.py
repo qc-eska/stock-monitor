@@ -5,24 +5,7 @@ TOKEN = os.getenv("TELEGRAM_TOKEN")
 BASE_URL = f"https://api.telegram.org/bot{TOKEN}"
 CHAT_ID = os.getenv("CHAT_ID")
 
-
-def set_channel_photo(image_path):
-    print("[PHOTO]", image_path)
-
-    url = f"{BASE_URL}/setChatPhoto"
-
-    try:
-        with open(image_path, "rb") as photo:
-            r = requests.post(
-                url,
-                data={"chat_id": CHAT_ID},
-                files={"photo": photo}
-            )
-        print("[BRANDING PHOTO]", r.json())
-        return r.json()
-    except Exception as e:
-        print("[ERROR PHOTO]", e)
-        return None
+CURRENT_MODE = None  # 🔥 pamięta ostatni stan
 
 
 def set_channel_title(title):
@@ -39,16 +22,23 @@ def set_channel_title(title):
             }
         )
         print("[BRANDING TITLE]", r.json())
-        return r.json()
     except Exception as e:
         print("[ERROR TITLE]", e)
-        return None
 
 
 def set_mode(mode):
+    global CURRENT_MODE
+
     print("[MODE]", mode)
 
     mode = mode.lower()
+
+    # 🔥 NIE zmieniaj jeśli to samo
+    if mode == CURRENT_MODE:
+        print("[SKIP] mode unchanged")
+        return
+
+    CURRENT_MODE = mode
 
     if mode in ["bullish", "green", "positive"]:
         set_channel_title("📈 JSW - WZROSTY")
