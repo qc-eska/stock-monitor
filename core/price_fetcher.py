@@ -1,35 +1,62 @@
 import requests
+import time
 
 
-URL = "https://query1.finance.yahoo.com/v8/finance/chart/JSW.WA"
+URLS = [
+    "https://stooq.pl/q/l/?s=jsw_pl&i=1",
+    "https://stooq.pl/q/l/?s=jsw_pl"
+]
 
 
-def get_jsw_price():
+def parse(text):
     try:
-        r = requests.get(URL, timeout=10)
+        lines = text.strip().split("\n")
+        if len(lines) < 2:
+            return None
+
+        row = lines[1].split(",")
+
+        # znajdź pierwszą sensowną cenę (Close)
+        for val in row:
+            try:
+                v = float(val)
+                if 5 < v < 500:
+                    return v
+            except:
+                continue
+
+        return None
+
+    except:
+        return None
+
+
+def fetch(url):
+    try:
+        r = requests.get(url, timeout=10)
+
+        if r.status_code == 429:
+            print("RATE LIMITED - sleeping")
+            time.sleep(2)
+            return None
 
         if r.status_code != 200:
             print("HTTP ERROR:", r.status_code)
             return None
 
-        data = r.json()
-
-        result = data["chart"]["result"]
-
-        if not result:
-            print("NO RESULT DATA")
-            return None
-
-        price = result[0]["meta"]["regularMarketPrice"]
-
-        if not price:
-            print("NO PRICE FIELD")
-            return None
-
-        return {
-            "price": float(price)
-        }
+        return parse(r.text)
 
     except Exception as e:
         print("FETCH ERROR:", e)
         return None
+
+
+def get_jsw_price():
+    for url in URLS:
+        price = fetch(url)
+
+        if price:
+            return {"price": price}
+
+    print("ALL SOURCES FAILED")
+    return None
