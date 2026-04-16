@@ -1,37 +1,22 @@
-import time
-import threading
-
 from core.jsw import fetch_jsw_news
-from core.impact_engine import filter_news
-from telegram.bot import send_message
+from core.news_filter import process_news
+from telegram.channel_branding import set_mode
 
+def run_cycle():
+    print("TICK: fetching news...")
 
-def news_loop():
-    while True:
-        print("TICK: fetching news...")
+    articles = fetch_jsw_news()
 
-        news = fetch_jsw_news()
+    for article in articles:
+        result = process_news(article)
 
-        alerts, mode = filter_news(news)
+        if not result:
+            continue
 
-        # alerts → Telegram
-        for alert in alerts:
-            send_message(alert)
+        print("[SEND]", result["message"])
 
-        time.sleep(300)  # 5 minut
+        # 👇 Twoja funkcja wysyłki
+        send_to_telegram(result["message"])
 
-
-def run():
-    print("🚀 JSW CLEAN MONITOR STARTED")
-
-    send_message("🚀 JSW MONITOR ONLINE")
-
-    thread = threading.Thread(target=news_loop, daemon=True)
-    thread.start()
-
-    while True:
-        time.sleep(60)
-
-
-if __name__ == "__main__":
-    run()
+        # 👇 zmiana trybu kanału
+        set_mode(result["mode"])
