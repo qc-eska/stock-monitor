@@ -1,41 +1,31 @@
 import time
 import threading
 
-from core.price_fetcher import get_jsw_price
-from core.hourly_report import send_hourly_jsw_update
 from core.jsw import fetch_jsw_news
+from core.impact_engine import filter_news
 from telegram.bot import send_message
-
-
-def price_loop():
-    while True:
-        print("TICK: checking price...")
-
-        price = get_jsw_price()
-        print("PRICE:", price)
-
-        send_hourly_jsw_update(price)
-
-        time.sleep(60)
 
 
 def news_loop():
     while True:
+        print("TICK: fetching news...")
+
         news = fetch_jsw_news()
+        alerts = filter_news(news)
 
-        if news:
-            print("NEWS COUNT:", len(news))
+        for a in alerts:
+            send_message(a)
 
-        time.sleep(300)
+        time.sleep(300)  # 5 min
 
 
 def run():
-    print("🚀 JSW MONITOR STARTED")
+    print("🚀 JSW NEWS MONITOR STARTED")
 
-    send_message("🚀 JSW MONITOR ONLINE")
+    send_message("🚀 JSW NEWS MONITOR ONLINE")
 
-    threading.Thread(target=price_loop, daemon=True).start()
-    threading.Thread(target=news_loop, daemon=True).start()
+    t = threading.Thread(target=news_loop, daemon=True)
+    t.start()
 
     while True:
         time.sleep(60)
