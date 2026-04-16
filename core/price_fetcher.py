@@ -1,20 +1,37 @@
 import requests
 
 
+URL = "https://stooq.pl/q/l/?s=jsw&i=d"
+
+
 def get_jsw_price():
-    url = "https://stooq.pl/q/l/?s=jsw&f=sd2t2ohlcv&h&e=json"
-
     try:
-        r = requests.get(url, timeout=10)
-        data = r.json()
+        r = requests.get(URL, timeout=10)
 
-        item = data["data"][0]
+        if r.status_code != 200:
+            print("ERROR: bad response from stooq")
+            return None
+
+        text = r.text.strip()
+
+        if not text:
+            print("ERROR: empty response")
+            return None
+
+        lines = text.split("\n")
+
+        if len(lines) < 2:
+            print("ERROR: unexpected CSV format")
+            return None
+
+        data = lines[1].split(",")
+
+        price = float(data[4])
 
         return {
-            "price": float(item.get("close")),
-            "time": item.get("time"),
+            "price": price
         }
 
     except Exception as e:
-        print("Price fetch error:", e)
+        print("PRICE FETCH ERROR:", e)
         return None
