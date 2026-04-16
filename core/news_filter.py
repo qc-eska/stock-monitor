@@ -60,30 +60,23 @@ def format_message(title, url, score):
 
 
 def process_news(article):
-    """
-    article = {
-        "title": "...",
-        "url": "...",
-        "publishedAt": "..."
-    }
-    """
-
     title = article.get("title", "")
     url = article.get("url", "")
+    news_type = article.get("type", "jsw")
 
-    # 1. filtr JSW
-    if not is_relevant(title):
-        return None
-
-    # 2. duplikaty
     if is_duplicate(title):
         return None
 
-    # 3. scoring
     score = score_news(title)
-    mode = classify_score(score)
 
-    # 4. format
+    # 🔥 ważne: sektor = słabszy sygnał
+    if news_type == "sector":
+        score = int(score * 0.5)
+
+    if score == 0:
+        return None
+
+    mode = classify_score(score)
     message = format_message(title, url, score)
 
     return {
