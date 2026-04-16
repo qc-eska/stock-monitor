@@ -2,7 +2,7 @@ import time
 import threading
 
 from core.jsw import fetch_jsw_news
-from core.impact_engine import process_news
+from core.impact_engine import filter_news
 from telegram.bot import send_message
 
 
@@ -11,22 +11,23 @@ def news_loop():
         print("TICK: fetching news...")
 
         news = fetch_jsw_news()
-        alerts = filter_news(news)
-        alerts, mode = process_news(news)
 
-        for a in alerts:
-            send_message(a)
+        alerts, mode = filter_news(news)
 
-        time.sleep(300)  # 5 min
+        # alerts → Telegram
+        for alert in alerts:
+            send_message(alert)
+
+        time.sleep(300)  # 5 minut
 
 
 def run():
-    print("🚀 JSW NEWS MONITOR STARTED")
+    print("🚀 JSW CLEAN MONITOR STARTED")
 
-    send_message("🚀 JSW NEWS MONITOR ONLINE")
+    send_message("🚀 JSW MONITOR ONLINE")
 
-    t = threading.Thread(target=news_loop, daemon=True)
-    t.start()
+    thread = threading.Thread(target=news_loop, daemon=True)
+    thread.start()
 
     while True:
         time.sleep(60)
