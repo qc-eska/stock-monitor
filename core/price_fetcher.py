@@ -1,32 +1,8 @@
 import requests
-import json
-import re
+
+URL = "https://query1.finance.yahoo.com/v7/finance/quote?symbols=JSW.WA"
 
 CACHE = {"price": None}
-
-URL = "https://finance.yahoo.com/quote/JSW.WA"
-
-
-def extract_price(html):
-    try:
-        # znajdź JSON root App
-        match = re.search(r'root\.App\.main = (.*?);\n', html)
-
-        if not match:
-            return None
-
-        data = json.loads(match.group(1))
-
-        price = (
-            data["context"]["dispatcher"]["stores"]["QuoteSummaryStore"]
-            ["price"]["regularMarketPrice"]["raw"]
-        )
-
-        return float(price)
-
-    except Exception as e:
-        print("PARSE ERROR:", e)
-        return None
 
 
 def get_jsw_price():
@@ -35,21 +11,23 @@ def get_jsw_price():
 
         print("STATUS:", r.status_code)
 
-        if r.status_code != 200:
+        data = r.json()
+
+        result = data["quoteResponse"]["result"]
+
+        if not result:
             return None
 
-        price = extract_price(r.text)
+        price = result[0]["regularMarketPrice"]
 
-        if price:
-            CACHE["price"] = price
-            return {"price": price, "currency": "PLN"}
+        CACHE["price"] = price
 
-        if CACHE["price"]:
-            print("USING CACHE")
-            return {"price": CACHE["price"], "currency": "PLN"}
-
-        return None
+        return {"price": price, "currency": "PLN"}
 
     except Exception as e:
         print("ERROR:", e)
+
+        if CACHE["price"]:
+            return {"price": CACHE["price"], "currency": "PLN"}
+
         return None
