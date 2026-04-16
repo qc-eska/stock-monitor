@@ -1,41 +1,20 @@
 import requests
+import re
 
-CACHE = {
-    "price": None
-}
+CACHE = {"price": None}
 
-
-URL = "https://stooq.pl/q/l/?s=jsw_pl"
+URL = "https://www.gpw.pl/spolka?isin=PLJSW0000015"
 
 
-def parse_price(text):
+def extract_price(html):
     try:
-        lines = text.strip().split("\n")
-        if len(lines) < 2:
+        # GPW ma w HTML ostatnią cenę w formie liczby z przecinkiem
+        match = re.search(r'kurs[^0-9]*([0-9]+,[0-9]+)', html.lower())
+
+        if not match:
             return None
 
-        row = lines[1].split(",")
-
-        # Stooq format:
-        # 0 symbol
-        # 1 date
-        # 2 time
-        # 3 open
-        # 4 high
-        # 5 low
-        # 6 close
-
-        close = row[6]
-
-        if close == "B/D":
-            return None
-
-        price = float(close)
-
-        # sanity check (JSW nie może być 300+)
-        if price < 1 or price > 200:
-            print("INVALID PRICE FILTERED:", price)
-            return None
+        price = float(match.group(1).replace(",", "."))
 
         return price
 
@@ -46,15 +25,14 @@ def parse_price(text):
 
 def get_jsw_price():
     try:
-        r = requests.get(URL, timeout=10)
+        r = requests.get(URL, headers={"User-Agent": "Mozilla/5.0"}, timeout=10)
 
         print("STATUS:", r.status_code)
-        print("RAW:", r.text)
 
         if r.status_code != 200:
             return fallback()
 
-        price = parse_price(r.text)
+        price = extract_price(r.text)
 
         if price:
             CACHE["price"] = price
