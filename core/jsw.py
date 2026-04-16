@@ -13,11 +13,17 @@ def clean_text(text):
 
 def is_jsw_related(text):
     text = text.lower()
-    return (
-        "jsw" in text
-        or "jastrzębska" in text
-        or "spółka węglowa" in text
-    )
+
+    keywords = [
+        "jsw",
+        "jastrzębska",
+        "węgiel",
+        "koks",
+        "spółki węglowe",
+        "górnictwo"
+    ]
+
+    return any(k in text for k in keywords)
 
 
 def fetch_from_url(url):
@@ -25,6 +31,8 @@ def fetch_from_url(url):
         print("[FETCH]", url)
 
         feed = feedparser.parse(url)
+
+        print(f"[DEBUG] total entries: {len(feed.entries)}")
 
         news = []
 
@@ -35,8 +43,12 @@ def fetch_from_url(url):
             if not title or not link:
                 continue
 
+            print("[DEBUG] TITLE:", title)
+
             if not is_jsw_related(title):
                 continue
+
+            print("[MATCH] JSW-related:", title)
 
             news.append({
                 "title": title,
@@ -59,7 +71,7 @@ def fetch_jsw_news(limit=10):
         if news:
             all_news.extend(news)
 
-    # deduplikacja po title
+    # deduplikacja
     unique = {}
     for n in all_news:
         unique[n["title"]] = n
