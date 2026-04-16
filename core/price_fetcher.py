@@ -12,8 +12,6 @@ def get_jsw_price():
 
         return {
             "price": float(item.get("close")),
-            "change": item.get("change"),
-            "change_pct": item.get("changes"),
             "time": item.get("time"),
         }
 
