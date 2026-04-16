@@ -1,62 +1,48 @@
 import requests
-import time
+import re
 
 
-URLS = [
-    "https://stooq.pl/q/l/?s=jsw_pl&i=1",
-    "https://stooq.pl/q/l/?s=jsw_pl"
-]
+URL = "https://finance.yahoo.com/quote/JSW.WA"
 
 
-def parse(text):
-    try:
-        lines = text.strip().split("\n")
-        if len(lines) < 2:
-            return None
+def extract_price(html):
+    # szukamy patternu ceny w HTML (meta / JSON embedded)
+    match = re.search(r'"regularMarketPrice":\{"raw":([0-9.]+)', html)
 
-        row = lines[1].split(",")
+    if match:
+        return float(match.group(1))
 
-        # znajdź pierwszą sensowną cenę (Close)
-        for val in row:
-            try:
-                v = float(val)
-                if 5 < v < 500:
-                    return v
-            except:
-                continue
+    # fallback regex (czasem w HTML)
+    match = re.search(r'price.*?([0-9]{1,4}\.[0-9]{2})', html)
 
-        return None
+    if match:
+        return float(match.group(1))
 
-    except:
-        return None
-
-
-def fetch(url):
-    try:
-        r = requests.get(url, timeout=10)
-
-        if r.status_code == 429:
-            print("RATE LIMITED - sleeping")
-            time.sleep(2)
-            return None
-
-        if r.status_code != 200:
-            print("HTTP ERROR:", r.status_code)
-            return None
-
-        return parse(r.text)
-
-    except Exception as e:
-        print("FETCH ERROR:", e)
-        return None
+    return None
 
 
 def get_jsw_price():
-    for url in URLS:
-        price = fetch(url)
+    try:
+        headers = {
+            "User-Agent": "Mozilla/5.0"
+        }
+
+        r = requests.get(URL, headers=headers, timeout=10)
+
+        print("HTTP:", r.status_code)
+
+        if r.status_code != 200:
+            return None
+
+        price = extract_price(r.text)
 
         if price:
             return {"price": price}
 
-    print("ALL SOURCES FAILED")
-    return None
+        print("PRICE NOT FOUND IN HTML")
+
+        return None
+
+    except Exception as e:
+        print("FETCH ERROR:", e)
+        return None
