@@ -1,6 +1,6 @@
-import re
+from datetime import datetime
+import calendar
 
-# Słowa kluczowe → wpływ na kurs
 HIGH_IMPACT = {
     "wynik": 5,
     "zysk": 5,
@@ -27,18 +27,52 @@ HIGH_IMPACT = {
     "umowa": 3,
     "analiza": 2,
     "rekomendacja": 3,
+    "zarząd": 3,
+    "decyzja": 4,
 }
 
 BLOCKLIST = [
-    "kurs akcji",
     "notowania",
-    "giełda dziś",
+    "kurs akcji",
+    "giełda",
     "podsumowanie sesji",
 ]
 
 
-def normalize(text: str):
+def normalize(text: str) -> str:
     return (text or "").lower()
+
+
+# ----------------------------
+# 📅 FILTER: ONLY CURRENT MONTH
+# ----------------------------
+def is_current_month():
+    now = datetime.utcnow()
+    return now.month, now.year
+
+
+def is_recent(item: dict) -> bool:
+    """
+    Google News RSS nie zawsze daje daty w prostym formacie,
+    więc robimy soft-filter:
+    - jeśli brak daty → przepuszczamy
+    - jeśli data istnieje → sprawdzamy miesiąc
+    """
+
+    pub_date = item.get("published") or item.get("date")
+
+    if not pub_date:
+        return True  # brak daty = nie blokujemy
+
+    try:
+        dt = datetime.fromisoformat(pub_date.replace("Z", ""))
+
+        current_month, current_year = is_current_month()
+
+        return dt.month == current_month and dt.year == current_year
+
+    except Exception:
+        return True
 
 
 def score_news(text: str) -> int:
@@ -55,7 +89,6 @@ def score_news(text: str) -> int:
 def is_relevant(text: str) -> bool:
     text = normalize(text)
 
-    # blokujemy szum
     for b in BLOCKLIST:
         if b in text:
             return False
@@ -63,7 +96,7 @@ def is_relevant(text: str) -> bool:
     return True
 
 
-def build_alert(item: dict, score: int):
+def build_alert(item: dict, score: int) -> str:
     return (
         f"📈 JSW IMPACT ALERT (score: {score})\n\n"
         f"{item.get('title')}\n\n"
@@ -71,18 +104,23 @@ def build_alert(item: dict, score: int):
     )
 
 
-def filter_news(news: list):
+def filter_news(news: list) -> list:
     alerts = []
 
     for item in news:
-        text = item.get("title", "") + " " + item.get("url", "")
+        text = f"{item.get('title','')} {item.get('url','')}"
 
+        # 1. filtr miesiąca
+        if not is_recent(item):
+            continue
+
+        # 2. blokady
         if not is_relevant(text):
             continue
 
+        # 3. scoring
         score = score_news(text)
 
-        # próg decyzji
         if score >= 5:
             alerts.append(build_alert(item, score))
 
