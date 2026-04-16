@@ -1,7 +1,7 @@
 import requests
 
 
-URL = "https://stooq.pl/q/l/?s=jsw_pl&i=1"
+URL = "https://query1.finance.yahoo.com/v8/finance/chart/JSW.WA"
 
 
 def get_jsw_price():
@@ -12,26 +12,22 @@ def get_jsw_price():
             print("HTTP ERROR:", r.status_code)
             return None
 
-        text = r.text.strip()
+        data = r.json()
 
-        print("RAW:", text)  # debug — zobaczymy co zwraca
+        result = data["chart"]["result"]
 
-        lines = text.split("\n")
-
-        if len(lines) < 2:
-            print("CSV FORMAT ERROR")
+        if not result:
+            print("NO RESULT DATA")
             return None
 
-        row = lines[1].split(",")
+        price = result[0]["meta"]["regularMarketPrice"]
 
-        if len(row) < 5:
-            print("CSV COLUMN ERROR")
+        if not price:
+            print("NO PRICE FIELD")
             return None
-
-        price = float(row[4])
 
         return {
-            "price": price
+            "price": float(price)
         }
 
     except Exception as e:
