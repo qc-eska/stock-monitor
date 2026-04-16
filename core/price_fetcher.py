@@ -1,38 +1,32 @@
 import requests
+import re
 
-URL = "https://stooq.pl/q/l/?s=jsw_pl"
+URL = "https://finance.yahoo.com/quote/JSW.WA"
+
+CACHE = {"price": None}
 
 
 def get_jsw_price():
     try:
-        r = requests.get(URL, timeout=10)
+        r = requests.get(URL, headers={"User-Agent": "Mozilla/5.0"}, timeout=10)
 
-        print("RAW:", r.text)
-
-        lines = r.text.strip().split("\n")
-
-        if len(lines) < 2:
+        if r.status_code != 200:
+            print("HTTP ERROR:", r.status_code)
             return None
 
-        row = lines[1].split(",")
+        # szukamy konkretnego pola JSON embedded w HTML
+        match = re.search(r'"regularMarketPrice":\{"raw":([0-9.]+)', r.text)
 
-        # CSV format:
-        # 0 symbol
-        # 1 date
-        # 2 time
-        # 3 open
-        # 4 high
-        # 5 low
-        # 6 close  ← TO JEST NAJPEWNIEJSZE
+        if match:
+            price = float(match.group(1))
+            CACHE["price"] = price
 
-        close = row[6]
+            return {"price": price, "currency": "PLN"}
 
-        price = float(close)
+        if CACHE["price"]:
+            return {"price": CACHE["price"], "currency": "PLN"}
 
-        return {
-            "price": price,
-            "currency": "PLN"
-        }
+        return None
 
     except Exception as e:
         print("ERROR:", e)
