@@ -18,6 +18,15 @@ cursor.execute(
     """
 )
 
+cursor.execute(
+    """
+    CREATE TABLE IF NOT EXISTS app_state (
+        key TEXT PRIMARY KEY,
+        value TEXT
+    )
+    """
+)
+
 conn.commit()
 
 
@@ -30,5 +39,19 @@ def mark_seen(article_id):
     cursor.execute(
         "INSERT OR IGNORE INTO seen_news(article_id) VALUES (?)",
         (article_id,),
+    )
+    conn.commit()
+
+
+def get_state(key, default=None):
+    cursor.execute("SELECT value FROM app_state WHERE key=?", (key,))
+    row = cursor.fetchone()
+    return row[0] if row else default
+
+
+def set_state(key, value):
+    cursor.execute(
+        "INSERT OR REPLACE INTO app_state(key, value) VALUES (?, ?)",
+        (key, str(value)),
     )
     conn.commit()
