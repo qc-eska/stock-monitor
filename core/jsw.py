@@ -3,6 +3,8 @@ import requests
 from bs4 import BeautifulSoup
 import re
 
+from config import REQUEST_TIMEOUT
+
 URLS_RSS = [
     "https://www.bankier.pl/rss/wiadomosci.xml",
 ]
@@ -72,7 +74,8 @@ def fetch_from_html(url):
     news = []
 
     try:
-        r = requests.get(url, headers={"User-Agent": "Mozilla/5.0"}, timeout=10)
+        r = requests.get(url, headers={"User-Agent": "Mozilla/5.0"}, timeout=REQUEST_TIMEOUT)
+        r.raise_for_status()
 
         soup = BeautifulSoup(r.text, "html.parser")
 
@@ -103,7 +106,7 @@ def fetch_from_html(url):
                 "type": tag
             })
 
-    except Exception as e:
+    except requests.RequestException as e:
         print("[ERROR HTML]", e)
 
     return news

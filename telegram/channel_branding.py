@@ -1,9 +1,10 @@
 import os
 import requests
+from config import TELEGRAM_TOKEN, CHAT_ID, REQUEST_TIMEOUT
 
-TOKEN = os.getenv("TELEGRAM_TOKEN")
+TOKEN = TELEGRAM_TOKEN
 BASE_URL = f"https://api.telegram.org/bot{TOKEN}"
-CHAT_ID = os.getenv("CHAT_ID")
+CHAT_ID = CHAT_ID
 
 CURRENT_MODE = None
 
@@ -21,15 +22,21 @@ def set_channel_title(title):
     url = f"{BASE_URL}/setChatTitle"
 
     try:
+        if not TOKEN or not CHAT_ID:
+            print("[ERROR TITLE] Missing TELEGRAM_TOKEN or CHAT_ID")
+            return
+
         r = requests.post(
             url,
             data={
                 "chat_id": CHAT_ID,
                 "title": title
-            }
+            },
+            timeout=REQUEST_TIMEOUT,
         )
+        r.raise_for_status()
         print("[BRANDING TITLE]", r.json())
-    except Exception as e:
+    except requests.RequestException as e:
         print("[ERROR TITLE]", e)
 
 

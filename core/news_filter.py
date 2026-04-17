@@ -1,6 +1,6 @@
 import hashlib
 
-SEEN_HASHES = set()
+from database.db import is_seen, mark_seen
 
 POSITIVE = [
     "zysk", "rekord", "umowa", "wzrost", "kontrakt",
@@ -29,9 +29,11 @@ SECTOR_NEGATIVE = [
 
 def is_duplicate(text):
     h = hashlib.md5(text.encode()).hexdigest()
-    if h in SEEN_HASHES:
+
+    if is_seen(h):
         return True
-    SEEN_HASHES.add(h)
+
+    mark_seen(h)
     return False
 
 

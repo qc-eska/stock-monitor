@@ -1,32 +1,10 @@
 import time
-import requests
-import os
 
 from core.jsw import fetch_jsw_news
 from core.news_filter import process_news
+from config import CHECK_INTERVAL
 from telegram.channel_branding import set_mode
-
-TOKEN = os.getenv("TELEGRAM_TOKEN")
-CHAT_ID = os.getenv("CHAT_ID")
-
-BASE_URL = f"https://api.telegram.org/bot{TOKEN}"
-
-
-def send_to_telegram(message):
-    url = f"{BASE_URL}/sendMessage"
-
-    try:
-        r = requests.post(
-            url,
-            data={
-                "chat_id": CHAT_ID,
-                "text": message,
-                "disable_web_page_preview": False
-            }
-        )
-        print("[TELEGRAM]", r.json())
-    except Exception as e:
-        print("[ERROR TELEGRAM]", e)
+from telegram.bot import send_message
 
 
 def run_cycle():
@@ -51,7 +29,7 @@ def run_cycle():
 
         print("[SEND]", message)
 
-        send_to_telegram(message)
+        send_message(message)
         set_mode(result["mode"])
 
 
@@ -64,7 +42,7 @@ def main():
         except Exception as e:
             print("[ERROR MAIN LOOP]", e)
 
-        time.sleep(300)
+        time.sleep(CHECK_INTERVAL)
 
 
 if __name__ == "__main__":
