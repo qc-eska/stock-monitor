@@ -9,6 +9,20 @@ from database.db import get_state, set_state
 LAST_HOURLY_REPORT_AT = "last_hourly_report_at"
 PRICE_ALERT_ANCHOR = "price_alert_anchor"
 MARKET_TIMEZONE = ZoneInfo("Europe/Warsaw")
+MARKET_HOLIDAYS = {
+    2026: {
+        "2026-01-01",
+        "2026-01-06",
+        "2026-04-03",
+        "2026-04-06",
+        "2026-05-01",
+        "2026-06-04",
+        "2026-11-11",
+        "2026-12-24",
+        "2026-12-25",
+        "2026-12-31",
+    }
+}
 
 
 def format_price(value):
@@ -19,6 +33,10 @@ def is_market_open(now=None):
     current_time = now or datetime.now(MARKET_TIMEZONE)
 
     if current_time.weekday() >= 5:
+        return False
+
+    holiday_dates = MARKET_HOLIDAYS.get(current_time.year, set())
+    if current_time.date().isoformat() in holiday_dates:
         return False
 
     minutes = current_time.hour * 60 + current_time.minute
