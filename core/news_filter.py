@@ -144,7 +144,7 @@ def classify_score(score):
     return "neutral"
 
 
-def format_message(title, url, score, label, priority):
+def format_message(title, url, score, label, priority, source):
     emoji = "⚖️"
 
     if score > 0:
@@ -152,13 +152,14 @@ def format_message(title, url, score, label, priority):
     elif score < 0:
         emoji = "📉"
 
-    return f"{emoji} [{label} | WAGA {priority}] {title}\n{url}"
+    return f"{emoji} [{label} | WAGA {priority}] {title}\nZrodlo: {source}\n{url}"
 
 
 def process_news(article):
     title = article.get("title", "")
     url = article.get("url", "")
     news_type = article.get("type", "company")
+    source = article.get("source", "Nieznane")
 
     if is_duplicate(title):
         return None
@@ -171,7 +172,7 @@ def process_news(article):
     score = score_news(title, news_type)
     label = HIGH_IMPACT_RULES.get(news_type, {}).get("label", "NEWS")
     mode = classify_score(score)
-    message = format_message(title, url, score, label, priority)
+    message = format_message(title, url, score, label, priority, source)
 
     return {
         "message": message,

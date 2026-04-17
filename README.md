@@ -3,6 +3,14 @@
 Bot monitoruje wysokowagowe newsy o JSW i bliskim otoczeniu spolki, wysyla alerty na Telegram i zmienia branding kanalu.
 Dodatkowo monitoruje kurs JSW, wysyla raport godzinowy i alert przy zmianie ceny o co najmniej zadany prog procentowy.
 
+Domyslnie monitor korzysta z kilku zrodel:
+
+- `JSW RSS Aktualnosci` - oficjalne aktualnosci spolki
+- `JSW RSS Raporty` - oficjalne raporty biezace spolki
+- `JSW Aktualnosci` - fallback HTML dla biura prasowego JSW
+- `JSW Raporty` - fallback HTML dla raportow biezacych JSW
+- `Bankier RSS` i `Bankier HTML` - dodatkowe zrodlo mediowe
+
 ## Wymagane zmienne srodowiskowe
 
 - `TELEGRAM_TOKEN` - token bota Telegram

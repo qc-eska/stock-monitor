@@ -2,15 +2,44 @@ import feedparser
 import requests
 from bs4 import BeautifulSoup
 import re
+from urllib.parse import urljoin
 
 from config import REQUEST_TIMEOUT
 
-URLS_RSS = [
-    "https://www.bankier.pl/rss/wiadomosci.xml",
+RSS_SOURCES = [
+    {
+        "url": "https://www.bankier.pl/rss/wiadomosci.xml",
+        "source": "Bankier RSS",
+    },
+    {
+        "url": "https://www.jsw.pl/rss/aktualnosci",
+        "source": "JSW RSS Aktualnosci",
+    },
+    {
+        "url": "https://www.jsw.pl/rss/raporty-biezace",
+        "source": "JSW RSS Raporty",
+    },
 ]
 
-URLS_HTML = [
-    "https://www.bankier.pl/wiadomosci",
+HTML_SOURCES = [
+    {
+        "url": "https://www.bankier.pl/wiadomosci",
+        "source": "Bankier HTML",
+        "base_url": "https://www.bankier.pl",
+        "link_prefixes": [],
+    },
+    {
+        "url": "https://www.jsw.pl/biuro-prasowe/aktualnosci",
+        "source": "JSW Aktualnosci",
+        "base_url": "https://www.jsw.pl",
+        "link_prefixes": ["/biuro-prasowe/aktualnosci/artykul/"],
+    },
+    {
+        "url": "https://www.jsw.pl/relacje-inwestorskie/raporty-gieldowe/raporty-biezace/wyszukiwarka-raportow",
+        "source": "JSW Raporty",
+        "base_url": "https://www.jsw.pl",
+        "link_prefixes": ["/relacje-inwestorskie/raporty-gieldowe/raporty-biezace/raport-biezacy/"],
+    },
 ]
 
 
@@ -110,10 +139,23 @@ def classify_text(text):
     return None
 
 
+def normalize_link(link, base_url):
+    return urljoin(base_url, link)
+
+
+def is_allowed_link(link, prefixes):
+    if not prefixes:
+        return True
+
+    return any(link.startswith(prefix) for prefix in prefixes)
+
+
 # ======================
 # RSS
 # ======================
-def fetch_from_rss(url):
+def fetch_from_rss(source_config):
+    url = source_config["url"]
+    source_name = source_config["source"]
     print("[RSS]", url)
 
     feed = feedparser.parse(url)
@@ -130,12 +172,13 @@ def fetch_from_rss(url):
         if not tag:
             continue
 
-        print(f"[MATCH RSS:{tag}]", title)
+        print(f"[MATCH RSS:{source_name}:{tag}]", title)
 
         news.append({
             "title": title,
             "url": link,
-            "type": tag
+            "type": tag,
+            "source": source_name,
         })
 
     return news
@@ -144,7 +187,11 @@ def fetch_from_rss(url):
 # ======================
 # HTML fallback
 # ======================
-def fetch_from_html(url):
+def fetch_from_html(source_config):
+    url = source_config["url"]
+    source_name = source_config["source"]
+    base_url = source_config["base_url"]
+    link_prefixes = source_config.get("link_prefixes", [])
     print("[HTML]", url)
 
     news = []
@@ -167,23 +214,26 @@ def fetch_from_html(url):
             if len(title) < 20:
                 continue
 
+            if not is_allowed_link(link, link_prefixes):
+                continue
+
             tag = classify_text(title)
             if not tag:
                 continue
 
-            if not link.startswith("http"):
-                link = "https://www.bankier.pl" + link
+            link = normalize_link(link, base_url)
 
-            print(f"[MATCH HTML:{tag}]", title)
+            print(f"[MATCH HTML:{source_name}:{tag}]", title)
 
             news.append({
                 "title": title,
                 "url": link,
-                "type": tag
+                "type": tag,
+                "source": source_name,
             })
 
     except requests.RequestException as e:
-        print("[ERROR HTML]", e)
+        print(f"[ERROR HTML:{source_name}]", e)
 
     return news
 
@@ -195,18 +245,18 @@ def fetch_jsw_news(limit=10):
     all_news = []
 
     # RSS
-    for url in URLS_RSS:
-        all_news.extend(fetch_from_rss(url))
+    for source_config in RSS_SOURCES:
+        all_news.extend(fetch_from_rss(source_config))
 
     # HTML fallback (jeśli mało danych)
     if len(all_news) < 3:
-        for url in URLS_HTML:
-            all_news.extend(fetch_from_html(url))
+        for source_config in HTML_SOURCES:
+            all_news.extend(fetch_from_html(source_config))
 
     # dedupe
     unique = {}
     for n in all_news:
-        unique[n["title"]] = n
+        unique[(n["title"], n["url"])] = n
 
     final_news = list(unique.values())[:limit]
 
