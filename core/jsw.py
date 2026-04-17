@@ -18,18 +18,94 @@ def clean_text(text):
     return re.sub(r"\s+", " ", text or "").strip()
 
 
+COMPANY_KEYWORDS = [
+    "jsw",
+    "jastrzębska spółka węglowa",
+    "jastrzebska spolka weglowa",
+    "bogdanka",
+    "kopalnia",
+    "kopalni",
+    "koksownia",
+    "koksownie",
+    "wydobycie",
+    "produkcja",
+    "sprzedaż",
+    "sprzedaz",
+    "ebitda",
+    "wyniki",
+    "dywidenda",
+    "zarząd",
+    "zarzad",
+    "związk",
+    "zwiazk",
+    "strajk",
+    "przestój",
+    "przestoj",
+    "awaria",
+    "pożar",
+    "pozar",
+    "wypadek",
+]
+
+COAL_COKE_KEYWORDS = [
+    "węgiel koksowy",
+    "wegiel koksowy",
+    "hard coking coal",
+    "coking coal",
+    "koks",
+    "coke",
+]
+
+STEEL_KEYWORDS = [
+    "stal",
+    "steel",
+    "hutnict",
+    "huta",
+    "wielki piec",
+    "blast furnace",
+    "arcelormittal",
+    "thyssenkrupp",
+    "liberty steel",
+]
+
+REGULATION_KEYWORDS = [
+    "ets",
+    "eu ets",
+    "cbam",
+    "darmowe uprawnienia",
+    "uprawnienia do emisji",
+    "emisji co2",
+    "pomoc publiczna",
+    "komisja europejska",
+    "unia europejska",
+    "bruksela",
+]
+
+
+def contains_any(text, keywords):
+    return any(keyword in text for keyword in keywords)
+
+
 def classify_text(text):
-    text = text.lower()
+    normalized = text.lower()
 
-    if "jsw" in text or "jastrzębsk" in text:
-        return "jsw"
+    if contains_any(normalized, COMPANY_KEYWORDS):
+        return "company"
 
-    sector_keywords = [
-        "węgl", "górn", "koks", "energet", "kopaln"
-    ]
+    if contains_any(normalized, COAL_COKE_KEYWORDS):
+        return "coal_coke"
 
-    if any(k in text for k in sector_keywords):
-        return "sector"
+    if contains_any(normalized, REGULATION_KEYWORDS) and (
+        contains_any(normalized, COAL_COKE_KEYWORDS)
+        or contains_any(normalized, STEEL_KEYWORDS)
+        or "jsw" in normalized
+        or "jastrzębsk" in normalized
+        or "jastrzebsk" in normalized
+    ):
+        return "regulation"
+
+    if contains_any(normalized, STEEL_KEYWORDS):
+        return "steel_demand"
 
     return None
 
