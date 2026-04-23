@@ -31,6 +31,16 @@ Bot preferuje tylko sygnaly o realnym znaczeniu dla JSW:
 - `HUTNICTWO` - duze zdarzenia popytowe po stronie stali i hut
 - `REGULACJE` - ETS, CBAM, pomoc publiczna i inne decyzje o realnym wplywie kosztowym
 
+## Tytul kanalu Telegram
+
+Tytul kanalu jest oparty na sentymencie ostatniego przepuszczonego newsa, a nie na aktualnym kursie JSW.
+
+- `bullish` ustawia `JSW - WZROSTY`
+- `bearish` ustawia `JSW - SPADKI`
+- `neutral` ustawia `JSW - NEUTRAL`
+
+Sentyment jest liczony z tytulu newsa na podstawie slow pozytywnych i negatywnych.
+
 ## Railway
 
 Na Railway ustaw `SEEN_DB_PATH` na sciezke w trwalym volume, na przyklad `/data/stock-monitor.db`.

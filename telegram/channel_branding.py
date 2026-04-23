@@ -8,13 +8,6 @@ CHAT_ID = CHAT_ID
 
 CURRENT_MODE = None
 
-# 🔥 priorytet trybów
-PRIORITY = {
-    "bullish": 1,
-    "neutral": 0,
-    "bearish": 2
-}
-
 
 def set_channel_title(title):
     print("[TITLE]", title)
@@ -47,17 +40,7 @@ def set_mode(mode):
 
     mode = mode.lower()
 
-    # 🔥 jeśli pierwszy raz
-    if CURRENT_MODE is None:
-        CURRENT_MODE = mode
-
-    # 🔥 jeśli nowy jest słabszy → ignoruj
-    elif PRIORITY.get(mode, 0) < PRIORITY.get(CURRENT_MODE, 0):
-        print("[SKIP] weaker signal")
-        return
-
-    # 🔥 jeśli taki sam → ignoruj
-    elif mode == CURRENT_MODE:
+    if mode == CURRENT_MODE:
         print("[SKIP] mode unchanged")
         return
 
