@@ -21,6 +21,7 @@ Domyslnie monitor korzysta z kilku zrodel:
 - `HOURLY_REPORT_INTERVAL` - odstep miedzy raportami kursu, domyslnie `3600`
 - `PRICE_ALERT_THRESHOLD_PERCENT` - prog alertu zmiany ceny wzgledem ostatniego alertu, domyslnie `1.0`
 - `MIN_NEWS_PRIORITY` - minimalna waga newsa wysylanego na Telegram, domyslnie `2`
+- `PRICE_MODE_THRESHOLD_PERCENT` - prog dziennej zmiany kursu do ustawiania tytulu kanalu, domyslnie `1.0`
 
 ## Zakres wysokowagowych newsow
 
@@ -33,13 +34,21 @@ Bot preferuje tylko sygnaly o realnym znaczeniu dla JSW:
 
 ## Tytul kanalu Telegram
 
-Tytul kanalu jest oparty na sentymencie ostatniego przepuszczonego newsa, a nie na aktualnym kursie JSW.
+Tytul kanalu jest oparty na aktualnym kursie JSW oraz sentymencie ostatniego przepuszczonego newsa.
+
+W godzinach sesji kurs ustawia tryb wedlug dziennej zmiany:
+
+- zmiana >= `PRICE_MODE_THRESHOLD_PERCENT` ustawia `JSW - WZROSTY`
+- zmiana <= `-PRICE_MODE_THRESHOLD_PERCENT` ustawia `JSW - SPADKI`
+- mniejsza zmiana ustawia `JSW - NEUTRAL`
+
+News, ktory przejdzie filtr wysokiej wagi, moze pozniej nadpisac tryb kanalu swoim sentymentem:
 
 - `bullish` ustawia `JSW - WZROSTY`
 - `bearish` ustawia `JSW - SPADKI`
 - `neutral` ustawia `JSW - NEUTRAL`
 
-Sentyment jest liczony z tytulu newsa na podstawie slow pozytywnych i negatywnych.
+Sentyment newsa jest liczony z tytulu na podstawie slow pozytywnych i negatywnych.
 
 ## Railway
 

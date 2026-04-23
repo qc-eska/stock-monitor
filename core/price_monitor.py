@@ -2,7 +2,11 @@ import time
 from datetime import datetime
 from zoneinfo import ZoneInfo
 
-from config import HOURLY_REPORT_INTERVAL, PRICE_ALERT_THRESHOLD_PERCENT
+from config import (
+    HOURLY_REPORT_INTERVAL,
+    PRICE_ALERT_THRESHOLD_PERCENT,
+    PRICE_MODE_THRESHOLD_PERCENT,
+)
 from database.db import get_state, set_state
 
 
@@ -70,6 +74,18 @@ def send_threshold_alert(quote, percent_change, send_message):
     )
     send_message(message)
     set_state(PRICE_ALERT_ANCHOR, quote["price"])
+
+
+def quote_mode(quote):
+    change_percent = quote.get("change_percent", 0)
+
+    if change_percent >= PRICE_MODE_THRESHOLD_PERCENT:
+        return "bullish"
+
+    if change_percent <= -PRICE_MODE_THRESHOLD_PERCENT:
+        return "bearish"
+
+    return "neutral"
 
 
 def process_quote(quote, send_message):

@@ -2,7 +2,7 @@ import time
 
 from core.jsw import fetch_jsw_news
 from core.news_filter import process_news
-from core.price_monitor import process_quote
+from core.price_monitor import is_market_open, process_quote, quote_mode
 from core.quote import fetch_jsw_quote
 from config import CHECK_INTERVAL
 from telegram.channel_branding import set_mode
@@ -16,6 +16,8 @@ def run_cycle():
         quote = fetch_jsw_quote()
         print("[QUOTE]", quote)
         process_quote(quote, send_message)
+        if is_market_open():
+            set_mode(quote_mode(quote))
     except Exception as exc:
         print("[ERROR QUOTE]", exc)
 
