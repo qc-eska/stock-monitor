@@ -85,19 +85,24 @@ COAL_COKE_KEYWORDS = [
     "hcc prices",
 ]
 
-STEEL_KEYWORDS = [
-    "stal",
-    "steel",
-    "hutnict",
-    "huta",
-    "crude steel",
+STEEL_DEMAND_KEYWORDS = [
+    "crude steel production",
     "steel production",
     "steel demand",
     "steel output",
     "steel outlook",
     "short range outlook",
-    "wielki piec",
     "blast furnace",
+    "blast furnaces",
+    "wielki piec",
+    "wielkie piece",
+]
+
+STEEL_COMPANY_KEYWORDS = [
+    "stal",
+    "steel",
+    "hutnict",
+    "huta",
     "arcelormittal",
     "thyssenkrupp",
     "liberty steel",
@@ -132,14 +137,15 @@ def classify_text(text):
 
     if contains_any(normalized, REGULATION_KEYWORDS) and (
         contains_any(normalized, COAL_COKE_KEYWORDS)
-        or contains_any(normalized, STEEL_KEYWORDS)
+        or contains_any(normalized, STEEL_DEMAND_KEYWORDS)
+        or contains_any(normalized, STEEL_COMPANY_KEYWORDS)
         or "jsw" in normalized
         or "jastrzębsk" in normalized
         or "jastrzebsk" in normalized
     ):
         return "regulation"
 
-    if contains_any(normalized, STEEL_KEYWORDS):
+    if contains_any(normalized, STEEL_DEMAND_KEYWORDS):
         return "steel_demand"
 
     return None
