@@ -1,6 +1,7 @@
 import hashlib
+from datetime import datetime, timezone
 
-from config import MIN_NEWS_PRIORITY
+from config import MAX_NEWS_AGE_HOURS, MIN_NEWS_PRIORITY
 from database.db import is_seen, mark_seen
 
 POSITIVE = [
@@ -16,6 +17,12 @@ POSITIVE = [
     "odblokowanie",
     "uruchomi",
     "wznowi",
+    "increase",
+    "growth",
+    "rebound",
+    "higher",
+    "shortage",
+    "disruption",
 ]
 
 NEGATIVE = [
@@ -36,6 +43,13 @@ NEGATIVE = [
     "pozar",
     "wypadek",
     "strajk",
+    "decrease",
+    "decline",
+    "lower",
+    "weak",
+    "slowdown",
+    "fall",
+    "drop",
 ]
 
 HIGH_IMPACT_RULES = {
@@ -56,8 +70,24 @@ HIGH_IMPACT_RULES = {
             "wegiel koksowy",
             "hard coking coal",
             "coking coal",
+            "metallurgical coal",
+            "met coal",
+            "premium hard coking coal",
+            "fob australia",
+            "coal export",
+            "coal exports",
+            "coal supply",
+            "coal disruption",
+            "coal shortage",
+            "queensland coal",
+            "australian coal",
             "koks",
             "coke",
+            "coke price",
+            "coke prices",
+            "hcc coal",
+            "hcc price",
+            "hcc prices",
         ],
     },
     "steel_demand": {
@@ -68,6 +98,12 @@ HIGH_IMPACT_RULES = {
             "steel",
             "hutnict",
             "huta",
+            "crude steel",
+            "steel production",
+            "steel demand",
+            "steel output",
+            "steel outlook",
+            "short range outlook",
             "wielki piec",
             "blast furnace",
             "arcelormittal",
@@ -121,6 +157,46 @@ def calculate_priority(text, news_type):
     return min(priority, 4)
 
 
+def parse_published_at(value):
+    if not value:
+        return None
+
+    try:
+        return datetime.fromisoformat(value)
+    except ValueError:
+        return None
+
+
+def news_age_hours(published_at):
+    if not published_at:
+        return None
+
+    now = datetime.now(timezone.utc)
+    return max((now - published_at).total_seconds() / 3600, 0)
+
+
+def is_too_old(published_at):
+    age_hours = news_age_hours(published_at)
+    if age_hours is None:
+        return False
+
+    return age_hours > MAX_NEWS_AGE_HOURS
+
+
+def format_age(published_at):
+    age_hours = news_age_hours(published_at)
+    if age_hours is None:
+        return "nieznany"
+
+    if age_hours < 1:
+        return f"{int(age_hours * 60)} min"
+
+    if age_hours < 48:
+        return f"{age_hours:.1f} h"
+
+    return f"{age_hours / 24:.1f} dni"
+
+
 def score_news(text, news_type):
     text = text.lower()
     score = 0
@@ -144,7 +220,7 @@ def classify_score(score):
     return "neutral"
 
 
-def format_message(title, url, score, label, priority, source):
+def format_message(title, url, score, label, priority, source, published_at):
     emoji = "⚖️"
 
     if score > 0:
@@ -152,7 +228,18 @@ def format_message(title, url, score, label, priority, source):
     elif score < 0:
         emoji = "📉"
 
-    return f"{emoji} [{label} | WAGA {priority}] {title}\nZrodlo: {source}\n{url}"
+    age = format_age(published_at)
+    published_line = (
+        f"Opublikowano: {published_at.isoformat()}\n" if published_at else ""
+    )
+
+    return (
+        f"{emoji} [{label} | WAGA {priority}] {title}\n"
+        f"Zrodlo: {source}\n"
+        f"Wiek info: {age}\n"
+        f"{published_line}"
+        f"{url}"
+    )
 
 
 def process_news(article):
@@ -160,6 +247,11 @@ def process_news(article):
     url = article.get("url", "")
     news_type = article.get("type", "company")
     source = article.get("source", "Nieznane")
+    published_at = parse_published_at(article.get("published_at"))
+
+    if is_too_old(published_at):
+        print(f"[SKIP OLD NEWS] {title} age={format_age(published_at)}")
+        return None
 
     if is_duplicate(title):
         return None
@@ -172,7 +264,7 @@ def process_news(article):
     score = score_news(title, news_type)
     label = HIGH_IMPACT_RULES.get(news_type, {}).get("label", "NEWS")
     mode = classify_score(score)
-    message = format_message(title, url, score, label, priority, source)
+    message = format_message(title, url, score, label, priority, source, published_at)
 
     return {
         "message": message,

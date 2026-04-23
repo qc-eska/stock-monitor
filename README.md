@@ -10,6 +10,7 @@ Domyslnie monitor korzysta z kilku zrodel:
 - `JSW Aktualnosci` - fallback HTML dla biura prasowego JSW
 - `JSW Raporty` - fallback HTML dla raportow biezacych JSW
 - `Bankier RSS` i `Bankier HTML` - dodatkowe zrodlo mediowe
+- `worldsteel RSS` - globalne tlo popytowe dla stali
 
 ## Wymagane zmienne srodowiskowe
 
@@ -22,6 +23,7 @@ Domyslnie monitor korzysta z kilku zrodel:
 - `PRICE_ALERT_THRESHOLD_PERCENT` - prog alertu zmiany ceny wzgledem ostatniego alertu, domyslnie `1.0`
 - `MIN_NEWS_PRIORITY` - minimalna waga newsa wysylanego na Telegram, domyslnie `2`
 - `PRICE_MODE_THRESHOLD_PERCENT` - prog dziennej zmiany kursu do ustawiania tytulu kanalu, domyslnie `1.0`
+- `MAX_NEWS_AGE_HOURS` - maksymalny wiek newsa z data publikacji, domyslnie `48`
 
 ## Zakres wysokowagowych newsow
 
@@ -29,7 +31,7 @@ Bot preferuje tylko sygnaly o realnym znaczeniu dla JSW:
 
 - `JSW` - wyniki, produkcja, kopalnie, koksownie, awarie, strajki, decyzje zarzadu
 - `WEGIEL/KOKS` - ceny i zdarzenia dotyczace wegla koksowego oraz koksu
-- `HUTNICTWO` - duze zdarzenia popytowe po stronie stali i hut
+- `HUTNICTWO` - duze zdarzenia popytowe po stronie stali i hut, w tym globalna produkcja i prognozy worldsteel
 - `REGULACJE` - ETS, CBAM, pomoc publiczna i inne decyzje o realnym wplywie kosztowym
 
 ## Tytul kanalu Telegram
@@ -49,6 +51,12 @@ News, ktory przejdzie filtr wysokiej wagi, moze pozniej nadpisac tryb kanalu swo
 - `neutral` ustawia `JSW - NEUTRAL`
 
 Sentyment newsa jest liczony z tytulu na podstawie slow pozytywnych i negatywnych.
+
+## Wiek newsow
+
+Dla RSS bot odczytuje date publikacji z `published` albo `updated`.
+Newsy starsze niz `MAX_NEWS_AGE_HOURS` sa pomijane.
+Jesli zrodlo nie podaje daty publikacji, bot nie odrzuca wpisu po wieku, ale oznacza jego wiek jako `nieznany`.
 
 ## Railway
 

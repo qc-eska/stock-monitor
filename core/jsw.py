@@ -2,6 +2,7 @@ import feedparser
 import requests
 from bs4 import BeautifulSoup
 import re
+from datetime import datetime, timezone
 from urllib.parse import urljoin
 
 from config import REQUEST_TIMEOUT
@@ -18,6 +19,10 @@ RSS_SOURCES = [
     {
         "url": "https://www.jsw.pl/rss/raporty-biezace",
         "source": "JSW RSS Raporty",
+    },
+    {
+        "url": "https://worldsteel.org/feed/",
+        "source": "worldsteel RSS",
     },
 ]
 
@@ -60,8 +65,24 @@ COAL_COKE_KEYWORDS = [
     "wegiel koksowy",
     "hard coking coal",
     "coking coal",
+    "metallurgical coal",
+    "met coal",
+    "premium hard coking coal",
+    "fob australia",
+    "coal export",
+    "coal exports",
+    "coal supply",
+    "coal disruption",
+    "coal shortage",
+    "queensland coal",
+    "australian coal",
     "koks",
     "coke",
+    "coke price",
+    "coke prices",
+    "hcc coal",
+    "hcc price",
+    "hcc prices",
 ]
 
 STEEL_KEYWORDS = [
@@ -69,6 +90,12 @@ STEEL_KEYWORDS = [
     "steel",
     "hutnict",
     "huta",
+    "crude steel",
+    "steel production",
+    "steel demand",
+    "steel output",
+    "steel outlook",
+    "short range outlook",
     "wielki piec",
     "blast furnace",
     "arcelormittal",
@@ -129,6 +156,14 @@ def is_allowed_link(link, prefixes):
     return any(link.startswith(prefix) for prefix in prefixes)
 
 
+def parsed_time_to_iso(parsed_time):
+    if not parsed_time:
+        return None
+
+    published_at = datetime(*parsed_time[:6], tzinfo=timezone.utc)
+    return published_at.isoformat()
+
+
 # ======================
 # RSS
 # ======================
@@ -143,6 +178,9 @@ def fetch_from_rss(source_config):
     for entry in feed.entries:
         title = clean_text(entry.get("title", ""))
         link = entry.get("link", "")
+        published_at = parsed_time_to_iso(
+            entry.get("published_parsed") or entry.get("updated_parsed")
+        )
 
         if not title or not link:
             continue
@@ -158,6 +196,7 @@ def fetch_from_rss(source_config):
             "url": link,
             "type": tag,
             "source": source_name,
+            "published_at": published_at,
         })
 
     return news
@@ -209,6 +248,7 @@ def fetch_from_html(source_config):
                 "url": link,
                 "type": tag,
                 "source": source_name,
+                "published_at": None,
             })
 
     except requests.RequestException as e:
