@@ -12,14 +12,16 @@ from telegram.bot import send_message
 def run_cycle():
     print("TICK: fetching news...")
 
-    try:
-        quote = fetch_jsw_quote()
-        print("[QUOTE]", quote)
-        process_quote(quote, send_message)
-        if is_market_open():
+    if is_market_open():
+        try:
+            quote = fetch_jsw_quote()
+            print("[QUOTE]", quote)
+            process_quote(quote, send_message)
             set_mode(quote_mode(quote))
-    except Exception as exc:
-        print("[ERROR QUOTE]", exc)
+        except Exception as exc:
+            print("[ERROR QUOTE]", exc)
+    else:
+        print("[QUOTE] skipped: GPW closed")
 
     articles = fetch_jsw_news()
 
